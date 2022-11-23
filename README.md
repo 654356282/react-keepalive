@@ -13,7 +13,7 @@
 组件缓存
 
 ```ts
-import { KeepAlive, useActived, useUnactived } from "react-keepalive";
+import { KeepAlive, useActived, useUnactived } from "@654356282/react-keepalive";
 import React, { useState } from "react";
 
 const Comp1 = () => {
@@ -70,7 +70,7 @@ function App() {
 与`react-router`集成
 ```ts
 import { ReactElement, useState } from "react";
-import { KeepAlive, useActived, useUnactived } from "react-keepalive";
+import { KeepAlive, useActived, useUnactived } from "@654356282/react-keepalive";
 import { RouterProvider, createBrowserRouter, NavLink } from "react-router-dom";
 import React from "react";
 
