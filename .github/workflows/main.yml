@@ -1,4 +1,4 @@
-name: Publish Keepalive to NPM
+name: Publish Keepalive
 on:
   release:
     types: [created]
@@ -46,3 +46,14 @@ jobs:
         name: Publish To Npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@654356282'
+      
+      - run: pnpm publish --no-git-checks --access public
+        name: Publish To Github
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
