@@ -1,3 +1,4 @@
+name: Publish Keepalive to NPM
 on:
   release:
     types: [create]
