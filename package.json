@@ -1,7 +1,7 @@
 {
   "name": "react-keepalive",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "main": "./lib/react-keepalive.umd.cjs",
   "module": "./lib/react-keepalive.js",
