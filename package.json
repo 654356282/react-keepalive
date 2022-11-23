@@ -6,9 +6,19 @@
   "main": "./lib/react-keepalive.umd.cjs",
   "module": "./lib/react-keepalive.js",
   "types": "./lib/src/index.d.ts",
+  "author": "wht <654356282@qq.com>",
   "repository": {
-    "url": "https://github.com/654356282/react-keepalive"
+    "url": "https://github.com/654356282/react-keepalive.git",
+    "type": "git"
   },
+  "license": "ISC",
+  "keywords": [
+    "react",
+    "keepalive"
+  ],
+  "bugs": "https://github.com/654356282/react-keepalive/issues",
+  "description": "React Keepalive Component",
+  "homepage": "https://github.com/654356282/react-keepalive",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -34,5 +44,8 @@
       "import": "./lib/react-keepalive.js",
       "require": "./lib/react-keepalive.umd.cjs"
     }
-  }
+  },
+  "files": [
+    "/lib"
+  ]
 }
