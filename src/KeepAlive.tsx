@@ -5,9 +5,10 @@ import React, {
   useState,
   ReactElement,
   useLayoutEffect,
+  useEffect,
 } from "react";
 import Context from "./context";
-import { setCurActiveName } from "./curActiveName";
+import { deleteCurActiveName, setCurActiveName } from "./curActiveName";
 import { createId } from "./id";
 
 function wrapPromise(p: Promise<void>) {
@@ -69,6 +70,12 @@ const KeepALive: FC<KeepAliveProps> = (props) => {
   const [comps, setComps] = useState<ReactElement[]>([]);
   const [resources, setResource] = useState<Function[]>([]);
   const [toggles, setToggles] = useState<boolean[]>([]);
+
+  useEffect(() => {
+    return () => {
+      deleteCurActiveName(id);
+    };
+  }, []);
 
   function isExclude(name: any) {
     if (!props.excludes) {
