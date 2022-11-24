@@ -35,7 +35,7 @@ export default defineConfig(({ command, mode }) => {
       },
       outDir: resolve(__dirname, "lib"),
       rollupOptions: {
-        external: ["react", "react-dom", "react/jsx-runtime"],
+        external: ["react", "react-dom"],
         output: {
           globals: {
             react: "React",

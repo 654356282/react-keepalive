@@ -1,10 +1,9 @@
-import {
+import React, {
   FC,
   Suspense,
   isValidElement,
   useState,
   ReactElement,
-  useEffect,
   useLayoutEffect,
 } from "react";
 import Context from "./context";
