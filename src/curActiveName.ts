@@ -7,3 +7,7 @@ export function getCurActiveName(id: string) {
 export function setCurActiveName(id: string, name: any) {
   curActiveName.set(id, name);
 }
+
+export function deleteCurActiveName(id: string) {
+  curActiveName.delete(id);
+}
