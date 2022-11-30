@@ -25,11 +25,11 @@ function wrapPromise(p: Promise<void>) {
   };
 }
 
-function createRenderPromise() {
+function resolve() {
   return () => {};
 }
 
-function createPendingPromise() {
+function pending() {
   return wrapPromise(new Promise(() => {}));
 }
 
@@ -102,13 +102,10 @@ const KeepALive: FC<KeepAliveProps> = (props) => {
         names.push(name);
       }
 
-      const newResources = new Array(newComps.length).fill(
-        createPendingPromise()
-      );
+      const newResources = new Array(newComps.length).fill(pending());
       const newToggles = new Array(newComps.length).fill(false);
       newToggles[nameIdx === -1 ? newComps.length - 1 : nameIdx] = true;
-      newResources[nameIdx === -1 ? newComps.length - 1 : nameIdx] =
-        createRenderPromise();
+      newResources[nameIdx === -1 ? newComps.length - 1 : nameIdx] = resolve();
       setResource(newResources);
       setToggles(newToggles);
       setComps(newComps);
