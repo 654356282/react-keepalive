@@ -6,8 +6,9 @@ export interface KeepAliveContext {
   resources: Function[];
   activedName?: any;
   id?: string | null;
-  excludes?: any[];
   toggles?: boolean[];
+  excludes?: any[] | RegExp;
+  includes?: any[] | RegExp;
 }
 
 const Context = createContext<KeepAliveContext>({
@@ -18,6 +19,7 @@ const Context = createContext<KeepAliveContext>({
   id: null,
   excludes: [],
   toggles: [],
+  includes: [],
 });
 
 export default Context;
