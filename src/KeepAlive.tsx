@@ -55,10 +55,11 @@ const Wrapper: FC<{
 
 export type KeepAliveProps = {
   children: ReactElement;
-  excludes?: any[];
+  excludes?: any[] | RegExp;
+  includes?: any[] | RegExp;
 };
 
-const KeepALive: FC<KeepAliveProps> = (props) => {
+const KeepAlive: FC<KeepAliveProps> = (props) => {
   if (!isValidElement(props.children)) {
     throw Error("Please use valid ReactElement!");
   }
@@ -81,11 +82,28 @@ const KeepALive: FC<KeepAliveProps> = (props) => {
     if (!props.excludes) {
       return false;
     }
+    if (props.excludes instanceof RegExp) {
+      return props.excludes.test(name);
+    }
+
     return props.excludes.includes(name);
+  }
+  function isInclude(name: any) {
+    if (!props.includes) return true;
+
+    if (props.includes instanceof RegExp) {
+      return props.includes.test(name);
+    }
+
+    return props.includes.includes(name);
+  }
+
+  function needKeepAlive(name: any) {
+    return !isExclude(name) && isInclude(name);
   }
 
   const name = getCompName(children);
-  if (isExclude(name)) {
+  if (!needKeepAlive(name)) {
     setCurActiveName(id, null);
   } else {
     setCurActiveName(id, name);
@@ -110,7 +128,7 @@ const KeepALive: FC<KeepAliveProps> = (props) => {
       setToggles(newToggles);
       setComps(newComps);
     }
-  });
+  }, [activedName, name]);
 
   return (
     <Context.Provider
@@ -122,17 +140,18 @@ const KeepALive: FC<KeepAliveProps> = (props) => {
         id,
         excludes: props.excludes,
         toggles,
+        includes: props.includes,
       }}
     >
       {comps.map((comp, idx) => {
         const isActive = toggles[idx];
-        const isExcluded =
-          isActive && props.excludes?.includes(getCompName(comp));
+        const name = getCompName(comp);
+        const isExcluded = isExclude(name);
+        const isIncluded = isInclude(name);
+        const isKeepAlive = !isExcluded && isIncluded;
 
-        return isExcluded ? (
-          isActive ? (
-            comp
-          ) : null
+        return !isKeepAlive ? (
+          <div key={idx}>{isActive ? comp : null}</div>
         ) : (
           <Suspense fallback={null} key={idx}>
             <Wrapper resource={resources[idx]} active={isActive}>
@@ -145,4 +164,4 @@ const KeepALive: FC<KeepAliveProps> = (props) => {
   );
 };
 
-export default KeepALive;
+export default KeepAlive;

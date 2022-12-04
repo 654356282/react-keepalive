@@ -14,7 +14,7 @@ const Comp1 = () => {
 
   return (
     <div>
-      Comp1
+      Comp1--{count}
       <button onClick={() => setCount(count + 1)}>+1</button>
     </div>
   );
@@ -33,13 +33,13 @@ const Comp2 = () => {
 
   return (
     <div>
-      Comp2
+      Comp2--{count}
       <button onClick={() => setCount(count + 1)}>+1</button>
     </div>
   );
 };
 
-function App() {
+export function App() {
   const [toggle, setToggle] = useState(false);
 
   return (
