@@ -1,6 +1,6 @@
 {
   "name": "@654356282/react-keepalive",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "type": "module",
   "main": "./lib/react-keepalive.umd.cjs",
   "module": "./lib/react-keepalive.js",
