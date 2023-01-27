@@ -8,5 +8,5 @@ import RouterKeepalive2 from './RouterKeepalive2'
 // render(<App />, container);
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-  <RouterKeepalive2 />
+  <App />
 );

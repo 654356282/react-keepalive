@@ -1,25 +1,13 @@
-import { useContext, useEffect, useMemo, useState } from "react";
-import Context from "./context";
-import { getCurActiveName } from "./curActiveName";
+import { useContext, useLayoutEffect, useState } from 'react';
+import Context from './context';
 
 export function useActived(cb: () => void) {
-  const { id, excludes, toggles, names, includes } = useContext(Context);
-  const parentName = useMemo(() => getCurActiveName(id!), [excludes, id, includes]);
-  const parentIdx = useMemo(() => names.indexOf(parentName), [parentName]);
-  const [active, setActive] = useState(false);
+  const { activedKey, deferActivedKey } = useContext(Context) || {};
+  const [rootKey] = useState(activedKey);
 
-  const isActive = !!toggles?.[parentIdx];
-
-
-  if (isActive && parentName === getCurActiveName(id!)) {
-    !active && setActive(true);
-  } else {
-    active && setActive(false);
-  }
-  useEffect(() => {
-    if (parentName === null) return;
-    if (active) {
+  useLayoutEffect(() => {
+    if (activedKey === deferActivedKey && activedKey === rootKey) {
       cb();
     }
-  }, [active]);
+  }, [deferActivedKey]);
 }

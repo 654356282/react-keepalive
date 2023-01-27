@@ -6,9 +6,26 @@
 
 ## Keepalive Props
 
-`excludes: []|Regexp`: 传入不需要缓存的组件的`key`，或者传入正则表达式
+`excludes: []|Regexp|(key: string|number)=>boolean`: 传入不需要缓存的组件的`key`，或者可传入正则表达式或函数
 
-`includes: []|Regexp`: 传入需要换的的组件的`key`，或者传入正则表达式
+`includes: []|Regexp|(key: string|number)=>boolean`: 传入需要换的的组件的`key`，或者可传入正则表达式或函数
+
+## Ref
+
+```ts
+type KeepAliveRef = {
+  controller: {
+    // 丢弃缓存的组件
+    drop: (name: Key) => void;
+  } | null;
+};
+```
+
+## Hooks
+
+`useActived`: 组件从初次渲染或者从隐藏切换到显示时激活
+`useUnactived`: 组件销毁或者从显示切换到隐藏时激活
+`useController`: 获取`ref`中`controller`对象
 
 ## usage
 
