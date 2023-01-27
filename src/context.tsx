@@ -1,25 +1,15 @@
-import { createContext, ReactElement } from "react";
+import { createContext } from 'react';
+import type { KeepAliveComponentInfo, Key } from './types';
 
 export interface KeepAliveContext {
-  names: any[];
-  comps: ReactElement[];
-  resources: Function[];
-  activedName?: any;
-  id?: string | null;
-  toggles?: boolean[];
-  excludes?: any[] | RegExp;
-  includes?: any[] | RegExp;
+  store: Map<Key, KeepAliveComponentInfo>;
+  activedKey: null | Key;
+  deferActivedKey: Key | null;
+  controller: {
+    drop: (key: Key) => void;
+  };
 }
 
-const Context = createContext<KeepAliveContext>({
-  names: [],
-  comps: [],
-  resources: [],
-  activedName: null,
-  id: null,
-  excludes: [],
-  toggles: [],
-  includes: [],
-});
+const Context = createContext<KeepAliveContext | null>(null);
 
 export default Context;
