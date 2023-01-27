@@ -1,167 +1,180 @@
-import React, {
-  FC,
+import type { FC, ReactElement } from "react";
+import { useMemo } from "react";
+import {
   Suspense,
   isValidElement,
   useState,
-  ReactElement,
-  useLayoutEffect,
   useEffect,
+  forwardRef,
+  useImperativeHandle,
 } from "react";
 import Context from "./context";
-import { deleteCurActiveName, setCurActiveName } from "./curActiveName";
-import { createId } from "./id";
-
-function wrapPromise(p: Promise<void>) {
-  let status = "pending";
-  const s = p.then(() => (status = "success"));
-
-  return () => {
-    switch (status) {
-      case "pending":
-        throw s;
-      case "success":
-        return null;
-    }
-  };
-}
-
-function resolve() {
-  return () => {};
-}
-
-function pending() {
-  return wrapPromise(new Promise(() => {}));
-}
-
-function getCompName(comp: ReactElement) {
-  return comp.key || comp.type;
-}
+import type {
+  KeepAliveComponentInfo,
+  KeepAliveProps,
+  KeepAliveRef,
+  Key,
+  Resource,
+} from "./types";
+import useUpdateEffect from "./useUpdateEffect";
+import {
+  isNumber,
+  isString,
+  isArray,
+  resolve,
+  pending,
+  safelyCallFn,
+  isNil,
+} from "./utils";
 
 const Wrapper: FC<{
-  resource?: Function;
+  resource?: Resource;
   children: ReactElement;
-  active: boolean;
 }> = ({ resource, children }) => {
-  try {
-    resource?.();
-  } catch (e) {
-    if ((e as any)?.then) {
-      throw e;
-    }
-  }
+  resource?.();
 
   return children;
 };
 
-export type KeepAliveProps = {
-  children: ReactElement;
-  excludes?: any[] | RegExp;
-  includes?: any[] | RegExp;
-};
-
-const KeepAlive: FC<KeepAliveProps> = (props) => {
+const KeepAlive = forwardRef<KeepAliveRef, KeepAliveProps>((props, ref) => {
   if (!isValidElement(props.children)) {
     throw Error("Please use valid ReactElement!");
   }
-  const [id] = useState(createId);
+  const childrenKey = isNil(props.children.key)
+    ? props.children.type.toString()
+    : props.children.key!;
+  if (isArray(props.includes) && isArray(props.excludes)) {
+    throw Error("excludes and includes can't exist at the same time");
+  }
+
   const { children } = props;
 
-  const [activedName, setActivedName] = useState<any | null>(null);
-  const [names] = useState<any[]>([]);
-  const [comps, setComps] = useState<ReactElement[]>([]);
-  const [resources, setResource] = useState<Function[]>([]);
-  const [toggles, setToggles] = useState<boolean[]>([]);
+  const store = useMemo(() => {
+    return new Map<Key, KeepAliveComponentInfo>();
+  }, []);
+  const [componentKeys, setComponentKeys] = useState<Key[]>([]);
+  const [deferActivedKey, setDeferActivedKey] = useState<Key | null>(null);
+  const [activedKey, setActivedKey] = useState<Key | null>(null);
 
   useEffect(() => {
-    return () => {
-      deleteCurActiveName(id);
-    };
-  }, []);
+    setDeferActivedKey(childrenKey);
+  }, [childrenKey]);
 
-  function isExclude(name: any) {
+  useUpdateEffect(
+    (_, [oldKey]) => {
+      if (oldKey !== null) {
+        const cbs = store.get(oldKey)!.unAnctivedCallbacks;
+        cbs.forEach((cb) => safelyCallFn(cb));
+      }
+    },
+    [childrenKey]
+  );
+
+  const controller = {
+    /** 丢弃缓存 */
+    drop(name: Key) {
+      if (store.has(name)) {
+        store.delete(name);
+        setComponentKeys((keys) => {
+          const index = keys.findIndex((item) => item === name);
+          keys.splice(index, 1);
+          return [...keys];
+        });
+      }
+    },
+  };
+
+  useImperativeHandle(ref, () => {
+    return {
+      controller,
+    };
+  });
+
+  function isExclude(key: Key) {
     if (!props.excludes) {
       return false;
     }
+    if (typeof props.excludes === "function") {
+      return props.excludes(key);
+    }
     if (props.excludes instanceof RegExp) {
-      return props.excludes.test(name);
+      return props.excludes.test(key.toString());
     }
 
-    return props.excludes.includes(name);
+    return props.excludes.includes(key);
   }
-  function isInclude(name: any) {
+  function isInclude(key: Key) {
     if (!props.includes) return true;
-
+    if (typeof props.includes === "function") {
+      return props.includes(key);
+    }
     if (props.includes instanceof RegExp) {
-      return props.includes.test(name);
+      return props.includes.test(key.toString());
     }
 
-    return props.includes.includes(name);
+    return props.includes.includes(key);
   }
 
-  function needKeepAlive(name: any) {
-    return !isExclude(name) && isInclude(name);
+  function isKeepAlive(key: Key) {
+    return !isExclude(key) && isInclude(key);
   }
 
-  const name = getCompName(children);
-  if (!needKeepAlive(name)) {
-    setCurActiveName(id, null);
+  if (store.has(childrenKey)) {
+    const componentInfo = store.get(childrenKey)!;
+    componentInfo.component = children;
   } else {
-    setCurActiveName(id, name);
+    store.set(childrenKey, {
+      component: children,
+      actived: false,
+      key: childrenKey,
+      resource: resolve,
+      isKeepAlive: true,
+      activedCallbacks: [],
+      unAnctivedCallbacks: [],
+    });
+    setComponentKeys(componentKeys.concat(childrenKey));
   }
-
-  useLayoutEffect(() => {
-    if (activedName !== name) {
-      setActivedName(() => name);
-
-      const nameIdx = names.indexOf(name);
-      let newComps = comps;
-      if (nameIdx === -1) {
-        newComps = comps.concat(children);
-        names.push(name);
-      }
-
-      const newResources = new Array(newComps.length).fill(pending());
-      const newToggles = new Array(newComps.length).fill(false);
-      newToggles[nameIdx === -1 ? newComps.length - 1 : nameIdx] = true;
-      newResources[nameIdx === -1 ? newComps.length - 1 : nameIdx] = resolve();
-      setResource(newResources);
-      setToggles(newToggles);
-      setComps(newComps);
-    }
-  }, [activedName, name]);
+  if (activedKey !== childrenKey) {
+    setActivedKey(childrenKey);
+  }
 
   return (
     <Context.Provider
       value={{
-        names,
-        comps,
-        resources,
-        activedName,
-        id,
-        excludes: props.excludes,
-        toggles,
-        includes: props.includes,
+        store,
+        activedKey: isKeepAlive(childrenKey) ? childrenKey : null,
+        deferActivedKey,
+        controller,
       }}
     >
-      {comps.map((comp, idx) => {
-        const isActive = toggles[idx];
-        const name = getCompName(comp);
-        const isExcluded = isExclude(name);
-        const isIncluded = isInclude(name);
-        const isKeepAlive = !isExcluded && isIncluded;
+      {componentKeys.map((key) => {
+        const componentInfo = store.get(key)!;
+        componentInfo.isKeepAlive = isKeepAlive(key);
 
-        return !isKeepAlive ? (
-          <div key={idx}>{isActive ? comp : null}</div>
-        ) : (
-          <Suspense fallback={null} key={idx}>
-            <Wrapper resource={resources[idx]} active={isActive}>
-              {comp}
+        if (!componentInfo.isKeepAlive) {
+          componentInfo.actived = false;
+          const shouldRender = componentInfo.key === childrenKey;
+          return shouldRender ? children : null;
+        }
+
+        if (childrenKey === componentInfo.key) {
+          componentInfo.actived = true;
+          componentInfo.resource = resolve;
+        } else {
+          componentInfo.actived = false;
+          componentInfo.resource = pending;
+        }
+
+        return (
+          <Suspense fallback={null} key={key}>
+            <Wrapper resource={componentInfo.resource}>
+              {componentInfo.component}
             </Wrapper>
           </Suspense>
         );
       })}
     </Context.Provider>
   );
-};
+});
 
 export default KeepAlive;
